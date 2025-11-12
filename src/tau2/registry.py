@@ -33,6 +33,10 @@ from tau2.domains.telecom.environment import (
 from tau2.environment.environment import Environment
 from tau2.user.base import BaseUser
 from tau2.user.user_simulator import DummyUser, UserSimulator
+from tau2.domains.collab.environment import (
+    get_environment as collab_domain_get_environment,
+)
+from tau2.domains.collab.environment import get_tasks as collab_domain_get_tasks
 
 
 class RegistryInfo(BaseModel):
@@ -191,6 +195,8 @@ try:
     registry.register_tasks(telecom_domain_get_tasks_small, "telecom_small")
     registry.register_tasks(telecom_domain_get_tasks, "telecom")
     registry.register_tasks(telecom_domain_get_tasks, "telecom-workflow")
+    registry.register_domain(collab_domain_get_environment, "collab")
+    registry.register_tasks(collab_domain_get_tasks, "collab")
     logger.debug(
         f"Default components registered successfully. Registry info: {json.dumps(registry.get_info().model_dump(), indent=2)}"
     )
