@@ -142,7 +142,7 @@ def run_domain(config: RunConfig) -> Results:
         max_errors=config.max_errors,
         save_to=save_to,
         console_display=True,
-        evaluation_type=EvaluationType.ALL,
+        evaluation_type=EvaluationType.ALL_WITH_NL_ASSERTIONS,
         max_concurrency=config.max_concurrency,
         seed=config.seed,
         log_level=config.log_level,
@@ -167,7 +167,7 @@ def run_tasks(
     max_errors: int = 10,
     save_to: Optional[str | Path] = None,
     console_display: bool = True,
-    evaluation_type: EvaluationType = EvaluationType.ALL,
+    evaluation_type: EvaluationType = EvaluationType.ALL_WITH_NL_ASSERTIONS,
     max_concurrency: int = 1,
     seed: Optional[int] = 300,
     log_level: Optional[str] = "INFO",
@@ -388,7 +388,7 @@ def run_task(
     llm_args_user: Optional[dict] = None,
     max_steps: int = 100,
     max_errors: int = 10,
-    evaluation_type: EvaluationType = EvaluationType.ALL,
+    evaluation_type: EvaluationType = EvaluationType.ALL_WITH_NL_ASSERTIONS,
     seed: Optional[int] = None,
 ) -> SimulationRun:
     """

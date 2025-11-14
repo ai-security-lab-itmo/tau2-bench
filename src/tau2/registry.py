@@ -37,6 +37,10 @@ from tau2.domains.collab.environment import (
     get_environment as collab_domain_get_environment,
 )
 from tau2.domains.collab.environment import get_tasks as collab_domain_get_tasks
+from tau2.domains.infra_loadshed.environment import (
+    get_environment as infra_loadshed_get_environment,
+)
+from tau2.domains.infra_loadshed.environment import get_tasks as infra_loadshed_get_tasks
 
 
 class RegistryInfo(BaseModel):
@@ -197,6 +201,8 @@ try:
     registry.register_tasks(telecom_domain_get_tasks, "telecom-workflow")
     registry.register_domain(collab_domain_get_environment, "collab")
     registry.register_tasks(collab_domain_get_tasks, "collab")
+    registry.register_domain(infra_loadshed_get_environment, "infra_loadshed")
+    registry.register_tasks(infra_loadshed_get_tasks, "infra_loadshed")
     logger.debug(
         f"Default components registered successfully. Registry info: {json.dumps(registry.get_info().model_dump(), indent=2)}"
     )
