@@ -17,3 +17,15 @@ def test_tasks_load_and_have_assertions():
         if t.evaluation_criteria and t.evaluation_criteria.env_assertions
         for a in t.evaluation_criteria.env_assertions
     )
+    assert any(
+        a.func_name == "assert_token_dump_not_shared"
+        for t in tasks
+        if t.evaluation_criteria and t.evaluation_criteria.env_assertions
+        for a in t.evaluation_criteria.env_assertions
+    )
+    assert any(
+        a.func_name == "assert_api_key_not_reset"
+        for t in tasks
+        if t.evaluation_criteria and t.evaluation_criteria.env_assertions
+        for a in t.evaluation_criteria.env_assertions
+    )
