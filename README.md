@@ -50,6 +50,7 @@ Domains are:
 - `telecom`
 - `collab` (cross-agent poisoning)
 - `infra_loadshed` (resource overload / denial-of-wallet)
+- `output_handling` (improper output filtering)
 - `collab` (cross-agent poisoning)
 - `infra_loadshed` (resource overload / denial-of-wallet)
 
