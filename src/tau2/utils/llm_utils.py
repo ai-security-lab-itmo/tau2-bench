@@ -7,6 +7,7 @@ from litellm import completion, completion_cost
 from litellm.caching.caching import Cache
 from litellm.main import ModelResponse, Usage
 from loguru import logger
+import os
 
 from tau2.config import (
     DEFAULT_LLM_CACHE_TYPE,
@@ -206,6 +207,17 @@ def generate(
     if tools and tool_choice is None:
         tool_choice = "auto"
     try:
+        # Hugging Face router support:
+        # - Allow model names like "huggingface/<org>/<model>:<variant>"
+        # - Map HF_TOKEN -> HUGGINGFACE_API_KEY env var if not already set
+        # - Provide a sensible default api_base if none was passed
+        if isinstance(model, str) and model.startswith("huggingface/"):
+            if os.getenv("HUGGINGFACE_API_KEY") is None and os.getenv("HF_TOKEN") is not None:
+                os.environ["HUGGINGFACE_API_KEY"] = os.getenv("HF_TOKEN")  # for litellm
+            if "api_base" not in kwargs or not kwargs.get("api_base"):
+                # Default to the HF router OpenAI-compatible endpoint
+                kwargs["api_base"] = "https://router.huggingface.co/v1"
+
         response = completion(
             model=model,
             messages=litellm_messages,

@@ -10,6 +10,7 @@ from tau2.domains.crm_leak.utils import (
     CRM_LEAK_TASK_SET_PATH,
 )
 from tau2.environment.environment import Environment
+from tau2.domains._task_utils import resolve_task_file_refs
 
 
 def get_environment(db: Optional[CRMDB] = None, solo_mode: bool = False) -> Environment:
@@ -30,7 +31,8 @@ def get_environment(db: Optional[CRMDB] = None, solo_mode: bool = False) -> Envi
 
 def get_tasks() -> list[Task]:
     with open(CRM_LEAK_TASK_SET_PATH, "r") as fp:
-        tasks = json.load(fp)
-    return [Task.model_validate(task) for task in tasks]
+        raw = json.load(fp)
+    raw = resolve_task_file_refs(raw, CRM_LEAK_TASK_SET_PATH)
+    return [Task.model_validate(task) for task in raw]
 
 

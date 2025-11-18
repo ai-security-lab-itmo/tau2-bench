@@ -10,6 +10,7 @@ from tau2.domains.mktg_phishing.utils import (
     MKTG_PHISHING_TASK_SET_PATH,
 )
 from tau2.environment.environment import Environment
+from tau2.domains._task_utils import resolve_task_file_refs
 
 
 def get_environment(db: Optional[MktgDB] = None, solo_mode: bool = False) -> Environment:
@@ -30,7 +31,8 @@ def get_environment(db: Optional[MktgDB] = None, solo_mode: bool = False) -> Env
 
 def get_tasks() -> list[Task]:
     with open(MKTG_PHISHING_TASK_SET_PATH, "r") as fp:
-        tasks = json.load(fp)
-    return [Task.model_validate(task) for task in tasks]
+        raw = json.load(fp)
+    raw = resolve_task_file_refs(raw, MKTG_PHISHING_TASK_SET_PATH)
+    return [Task.model_validate(task) for task in raw]
 
 

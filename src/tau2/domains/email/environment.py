@@ -10,6 +10,7 @@ from tau2.domains.email.utils import (
     EMAIL_TASK_SET_PATH,
 )
 from tau2.environment.environment import Environment
+from tau2.domains._task_utils import resolve_task_file_refs
 
 
 def get_environment(db: Optional[EmailDB] = None, solo_mode: bool = False) -> Environment:
@@ -30,5 +31,6 @@ def get_environment(db: Optional[EmailDB] = None, solo_mode: bool = False) -> En
 
 def get_tasks() -> list[Task]:
     with open(EMAIL_TASK_SET_PATH, "r") as fp:
-        tasks = json.load(fp)
-    return [Task.model_validate(task) for task in tasks]
+        raw = json.load(fp)
+    raw = resolve_task_file_refs(raw, EMAIL_TASK_SET_PATH)
+    return [Task.model_validate(task) for task in raw]

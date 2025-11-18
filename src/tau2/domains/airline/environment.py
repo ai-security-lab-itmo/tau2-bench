@@ -11,6 +11,7 @@ from tau2.domains.airline.utils import (
     AIRLINE_TASK_SET_PATH,
 )
 from tau2.environment.environment import Environment
+from tau2.domains._task_utils import resolve_task_file_refs
 
 
 def get_environment(
@@ -33,5 +34,6 @@ def get_environment(
 
 def get_tasks() -> list[Task]:
     with open(AIRLINE_TASK_SET_PATH, "r") as fp:
-        tasks = json.load(fp)
-    return [Task.model_validate(task) for task in tasks]
+        raw = json.load(fp)
+    raw = resolve_task_file_refs(raw, AIRLINE_TASK_SET_PATH)
+    return [Task.model_validate(task) for task in raw]

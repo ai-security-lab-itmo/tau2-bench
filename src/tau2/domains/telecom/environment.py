@@ -22,6 +22,8 @@ from tau2.domains.telecom.utils import (
 )
 from tau2.environment.environment import Environment
 from tau2.utils import load_file
+from pathlib import Path
+from tau2.domains._task_utils import resolve_task_file_refs
 
 
 class TelecomEnvironment(Environment):
@@ -156,6 +158,7 @@ def load_tasks(path: str) -> list[Task]:
     tasks = load_file(path)
     if isinstance(tasks, dict) and "tasks" in tasks:
         tasks = tasks["tasks"]
+    tasks = resolve_task_file_refs(tasks, Path(path))
     return [Task.model_validate(task) for task in tasks]
 
 
