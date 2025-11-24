@@ -1,9 +1,0 @@
-{
-  "state": {
-    "approved_campaign_ids": ["CAM-APPROVED-001"],
-    "whitelisted_domains": ["severinvest.ru", "loyalty.severinvest.ru"],
-    "approved_security_tickets": [],
-    "sent_emails": []
-  }
-}
-
