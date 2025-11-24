@@ -11,12 +11,6 @@ from tau2.domains.airline.environment import (
     get_environment as airline_domain_get_environment,
 )
 from tau2.domains.airline.environment import get_tasks as airline_domain_get_tasks
-from tau2.domains.mock.environment import get_environment as mock_domain_get_environment
-from tau2.domains.mock.environment import get_tasks as mock_domain_get_tasks
-from tau2.domains.retail.environment import (
-    get_environment as retail_domain_get_environment,
-)
-from tau2.domains.retail.environment import get_tasks as retail_domain_get_tasks
 from tau2.domains.telecom.environment import (
     get_environment_manual_policy as telecom_domain_get_environment_manual_policy,
 )
@@ -37,32 +31,10 @@ from tau2.domains.collab.environment import (
     get_environment as collab_domain_get_environment,
 )
 from tau2.domains.collab.environment import get_tasks as collab_domain_get_tasks
-from tau2.domains.email.environment import (
-    get_environment as email_domain_get_environment,
-)
-from tau2.domains.email.environment import get_tasks as email_domain_get_tasks
-from tau2.domains.rag_poison.environment import (
-    get_environment as rag_poison_domain_get_environment,
-)
-from tau2.domains.rag_poison.environment import (
-    get_tasks as rag_poison_domain_get_tasks,
-)
 from tau2.domains.crm_leak.environment import (
     get_environment as crm_leak_domain_get_environment,
 )
 from tau2.domains.crm_leak.environment import get_tasks as crm_leak_domain_get_tasks
-from tau2.domains.mktg_phishing.environment import (
-    get_environment as mktg_phishing_domain_get_environment,
-)
-from tau2.domains.mktg_phishing.environment import (
-    get_tasks as mktg_phishing_domain_get_tasks,
-)
-from tau2.domains.mail_rag_poison.environment import (
-    get_environment as mail_rag_domain_get_environment,
-)
-from tau2.domains.mail_rag_poison.environment import (
-    get_tasks as mail_rag_domain_get_tasks,
-)
 from tau2.domains.mail_rag_nexport.environment import (
     get_environment as mail_rag_nexport_domain_get_environment,
 )
@@ -227,32 +199,18 @@ try:
     registry.register_agent(LLMAgent, "llm_agent")
     registry.register_agent(LLMGTAgent, "llm_agent_gt")
     registry.register_agent(LLMSoloAgent, "llm_agent_solo")
-    registry.register_domain(mock_domain_get_environment, "mock")
-    registry.register_tasks(mock_domain_get_tasks, "mock")
     registry.register_domain(airline_domain_get_environment, "airline")
     registry.register_tasks(airline_domain_get_tasks, "airline")
-    registry.register_domain(retail_domain_get_environment, "retail")
-    registry.register_tasks(retail_domain_get_tasks, "retail")
     registry.register_domain(telecom_domain_get_environment_manual_policy, "telecom")
-    registry.register_domain(
-        telecom_domain_get_environment_workflow_policy, "telecom-workflow"
-    )
+    registry.register_domain(telecom_domain_get_environment_workflow_policy, "telecom-workflow")
     registry.register_tasks(telecom_domain_get_tasks_full, "telecom_full")
     registry.register_tasks(telecom_domain_get_tasks_small, "telecom_small")
     registry.register_tasks(telecom_domain_get_tasks, "telecom")
     registry.register_tasks(telecom_domain_get_tasks, "telecom-workflow")
     registry.register_domain(collab_domain_get_environment, "collab")
     registry.register_tasks(collab_domain_get_tasks, "collab")
-    registry.register_domain(email_domain_get_environment, "email")
-    registry.register_tasks(email_domain_get_tasks, "email")
-    registry.register_domain(rag_poison_domain_get_environment, "rag_poison")
-    registry.register_tasks(rag_poison_domain_get_tasks, "rag_poison")
     registry.register_domain(crm_leak_domain_get_environment, "crm_leak")
     registry.register_tasks(crm_leak_domain_get_tasks, "crm_leak")
-    registry.register_domain(mktg_phishing_domain_get_environment, "mktg_phishing")
-    registry.register_tasks(mktg_phishing_domain_get_tasks, "mktg_phishing")
-    registry.register_domain(mail_rag_domain_get_environment, "mail_rag_poison")
-    registry.register_tasks(mail_rag_domain_get_tasks, "mail_rag_poison")
     registry.register_domain(mail_rag_nexport_domain_get_environment, "mail_rag_nexport")
     registry.register_tasks(mail_rag_nexport_domain_get_tasks, "mail_rag_nexport")
     registry.register_domain(mail_rag_phishing_domain_get_environment, "mail_rag_phishing")
