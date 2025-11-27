@@ -18,7 +18,7 @@ from tau2.config import (
     DEFAULT_LLM_OUTPUT_ASSERTIONS_TEMPERATURE,
 )
 from tau2.data_model.simulation import RunConfig
-from tau2.run import get_options, run_domain
+from tau2.run import get_options, run_domain, run_domains
 from tau2.scripts.leaderboard.verify_trajectories import VerificationMode
 
 
@@ -30,7 +30,14 @@ def add_run_args(parser):
         "-d",
         type=str,
         choices=domains,
-        help="The domain to run the simulation on",
+        help="The domain to run the simulation on (use --domains for multiple domains)",
+    )
+    parser.add_argument(
+        "--domains",
+        nargs="+",
+        type=str,
+        choices=domains,
+        help="List of domains to run the simulation on (saves to multi-domain format)",
     )
     parser.add_argument(
         "--num-trials",
@@ -153,29 +160,7 @@ def main():
     run_parser = subparsers.add_parser("run", help="Run a benchmark")
     add_run_args(run_parser)
     run_parser.set_defaults(
-        func=lambda args: run_domain(
-            RunConfig(
-                domain=args.domain,
-                task_set_name=args.task_set_name,
-                task_ids=args.task_ids,
-                num_tasks=args.num_tasks,
-                agent=args.agent,
-                llm_agent=args.agent_llm,
-                llm_args_agent=args.agent_llm_args,
-                user=args.user,
-                llm_user=args.user_llm,
-                llm_args_user=args.user_llm_args,
-                llm_output_eval=args.output_eval_llm,
-                llm_args_output_eval=args.output_eval_llm_args,
-                num_trials=args.num_trials,
-                max_steps=args.max_steps,
-                max_errors=args.max_errors,
-                save_to=args.save_to,
-                max_concurrency=args.max_concurrency,
-                seed=args.seed,
-                log_level=args.log_level,
-            )
-        )
+        func=lambda args: run_command(args)
     )
 
     # View command
@@ -303,6 +288,43 @@ def main():
         return
 
     args.func(args)
+
+
+def run_command(args):
+    """Run command handler that supports both single and multi-domain runs."""
+    config = RunConfig(
+        domain=args.domain or "",  # Will be ignored if domains is provided
+        task_set_name=args.task_set_name,
+        task_ids=args.task_ids,
+        num_tasks=args.num_tasks,
+        agent=args.agent,
+        llm_agent=args.agent_llm,
+        llm_args_agent=args.agent_llm_args,
+        user=args.user,
+        llm_user=args.user_llm,
+        llm_args_user=args.user_llm_args,
+        llm_output_eval=args.output_eval_llm,
+        llm_args_output_eval=args.output_eval_llm_args,
+        num_trials=args.num_trials,
+        max_steps=args.max_steps,
+        max_errors=args.max_errors,
+        save_to=args.save_to,
+        max_concurrency=args.max_concurrency,
+        seed=args.seed,
+        log_level=args.log_level,
+    )
+    
+    if args.domains:
+        # Multi-domain run
+        if args.domain:
+            raise ValueError("Cannot use both --domain and --domains. Use --domains for multiple domains.")
+        return run_domains(domains=args.domains, config=config)
+    else:
+        # Single domain run
+        if not args.domain:
+            raise ValueError("Either --domain or --domains must be specified.")
+        config.domain = args.domain
+        return run_domain(config)
 
 
 def run_view_simulations(args):

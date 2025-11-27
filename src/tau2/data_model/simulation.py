@@ -1,3 +1,4 @@
+import json
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
@@ -458,3 +459,43 @@ class Results(BaseModel):
             row.update(get_task_metrics(task))
             rows.append(row)
         return pd.DataFrame(rows)
+
+
+class MultiDomainResults(BaseModel):
+    """
+    Multi-domain run results stored as {domain_name: Results}
+    """
+
+    timestamp: Optional[str] = Field(
+        description="The timestamp of the simulation.", default_factory=get_now
+    )
+    domains: dict[str, Results] = Field(
+        description="Dictionary mapping domain names to their Results"
+    )
+
+    @classmethod
+    def load(cls, path: Path) -> "MultiDomainResults":
+        """Load multi-domain results from a file."""
+        with open(path, "r") as f:
+            data = json.loads(f.read())
+            # Convert nested Results dicts to Results objects
+            domains = {}
+            for domain_name, results_dict in data.get("domains", {}).items():
+                domains[domain_name] = Results.model_validate(results_dict)
+            return cls(
+                timestamp=data.get("timestamp"),
+                domains=domains,
+            )
+
+    def save(self, path: Path) -> None:
+        """Save the multi-domain results to a file."""
+        with open(path, "w") as f:
+            # Convert to dict format
+            data = {
+                "timestamp": self.timestamp,
+                "domains": {
+                    domain_name: results.model_dump()
+                    for domain_name, results in self.domains.items()
+                },
+            }
+            json.dump(data, f, indent=4)

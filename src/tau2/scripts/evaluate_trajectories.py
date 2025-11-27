@@ -9,7 +9,7 @@ from loguru import logger
 from rich.console import Console
 from rich.progress import Progress
 
-from tau2.data_model.simulation import Results
+from tau2.data_model.simulation import MultiDomainResults, Results
 from tau2.evaluator.evaluator import EvaluationType, evaluate_simulation
 from tau2.metrics.agent_metrics import compute_metrics
 from tau2.utils.display import ConsoleDisplay
@@ -119,27 +119,68 @@ def evaluate_trajectories(
             continue
 
         try:
-            results = Results.load(file_path)
+            # Try to load as MultiDomainResults first
+            try:
+                multi_domain_results = MultiDomainResults.load(file_path)
+                console.print(
+                    f"  📦 Multi-domain file with {len(multi_domain_results.domains)} domains",
+                    style="cyan",
+                )
+                
+                # Process each domain
+                updated_domains = {}
+                for domain_name, domain_results in multi_domain_results.domains.items():
+                    console.print(f"    🔍 Processing domain: {domain_name}", style="dim")
+                    updated_results = compute_simulation_rewards(
+                        results=domain_results,
+                        evaluation_type=evaluation_type,
+                        console=console,
+                    )
+                    console.print(
+                        f"    ✅ Computed rewards for {len(updated_results.simulations)} simulation(s)",
+                        style="green",
+                    )
+                    
+                    # Display metrics
+                    metrics = compute_metrics(updated_results)
+                    ConsoleDisplay.display_agent_metrics(metrics)
+                    
+                    updated_domains[domain_name] = updated_results
+                
+                # Save updated multi-domain results if output directory is provided
+                if output_dir:
+                    input_filename = Path(file_path).name
+                    output_file = output_path / f"updated_{input_filename}"
+                    updated_multi_domain = MultiDomainResults(
+                        timestamp=multi_domain_results.timestamp,
+                        domains=updated_domains,
+                    )
+                    updated_multi_domain.save(output_file)
+                    console.print(f"  💾 Saved to: {output_file}", style="blue")
+                    
+            except Exception:
+                # Fall back to single-domain Results format
+                results = Results.load(file_path)
+                
+                # Compute and update rewards (returns new Results object)
+                updated_results = compute_simulation_rewards(
+                    results=results, evaluation_type=evaluation_type, console=console
+                )
+                console.print(
+                    f"  ✅ Computed rewards for {len(updated_results.simulations)} simulation(s)",
+                    style="green",
+                )
 
-            # Compute and update rewards (returns new Results object)
-            updated_results = compute_simulation_rewards(
-                results=results, evaluation_type=evaluation_type, console=console
-            )
-            console.print(
-                f"  ✅ Computed rewards for {len(updated_results.simulations)} simulation(s)",
-                style="green",
-            )
+                # Display metrics
+                metrics = compute_metrics(updated_results)
+                ConsoleDisplay.display_agent_metrics(metrics)
 
-            # Display metrics
-            metrics = compute_metrics(updated_results)
-            ConsoleDisplay.display_agent_metrics(metrics)
-
-            # Save updated results if output directory is provided
-            if output_dir:
-                input_filename = Path(file_path).name
-                output_file = output_path / f"updated_{input_filename}"
-                updated_results.save(output_file)
-                console.print(f"  💾 Saved to: {output_file}", style="blue")
+                # Save updated results if output directory is provided
+                if output_dir:
+                    input_filename = Path(file_path).name
+                    output_file = output_path / f"updated_{input_filename}"
+                    updated_results.save(output_file)
+                    console.print(f"  💾 Saved to: {output_file}", style="blue")
 
         except Exception as e:
             console.print(f"  ❌ Error processing file: {e}", style="red")

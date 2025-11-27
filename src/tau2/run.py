@@ -11,6 +11,7 @@ from tau2.agent.llm_agent import LLMAgent, LLMGTAgent, LLMSoloAgent
 from tau2.data_model.simulation import (
     AgentInfo,
     Info,
+    MultiDomainResults,
     Results,
     RunConfig,
     SimulationRun,
@@ -93,9 +94,13 @@ def make_run_name(config: RunConfig) -> str:
     return f"{get_now()}_{config.domain}_{agent_name}_{user_name}"
 
 
-def run_domain(config: RunConfig) -> Results:
+def run_domain(config: RunConfig, skip_save: bool = False) -> Results:
     """
     Run simulations for a domain
+    
+    Args:
+        config: RunConfig with domain settings
+        skip_save: If True, don't save results to a file (used when called from run_domains)
     """
     config.validate()
     ConsoleDisplay.display_run_config(config)
@@ -124,10 +129,12 @@ def run_domain(config: RunConfig) -> Results:
         ConsoleDisplay.console.print(console_text)
 
     num_trials = config.num_trials
-    save_to = config.save_to
-    if save_to is None:
-        save_to = make_run_name(config)
-    save_to = DATA_DIR / "simulations" / f"{save_to}.json"
+    save_to = None
+    if not skip_save:
+        save_to = config.save_to
+        if save_to is None:
+            save_to = make_run_name(config)
+        save_to = DATA_DIR / "simulations" / f"{save_to}.json"
     simulation_results = run_tasks(
         domain=config.domain,
         tasks=tasks,
@@ -153,6 +160,110 @@ def run_domain(config: RunConfig) -> Results:
     ConsoleDisplay.display_agent_metrics(metrics)
 
     return simulation_results
+
+
+def run_domains(domains: list[str], config: RunConfig) -> MultiDomainResults:
+    """
+    Run simulations for multiple domains and save them in a single file.
+    
+    Args:
+        domains: List of domain names to run
+        config: RunConfig with shared settings for all domains
+        
+    Returns:
+        MultiDomainResults containing results for all domains
+    """
+    if not domains:
+        raise ValueError("At least one domain must be specified")
+    
+    timestamp = get_now()
+    multi_domain_results = MultiDomainResults(
+        timestamp=timestamp,
+        domains={},
+    )
+    
+    save_to = config.save_to
+    if save_to is None:
+        clean_llm_agent_name = config.llm_agent.split("/")[-1]
+        agent_name = f"{config.agent}_{clean_llm_agent_name}"
+        clean_llm_user_name = config.llm_user.split("/")[-1]
+        user_name = f"{config.user}_{clean_llm_user_name}"
+        domains_str = "_".join(domains)
+        save_to = f"{timestamp}_{domains_str}_{agent_name}_{user_name}"
+    
+    save_to_path = DATA_DIR / "simulations" / f"{save_to}.json"
+    
+    # Create parent directories if needed
+    if not save_to_path.parent.exists():
+        save_to_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Check if file exists
+    if save_to_path.exists():
+        response = (
+            ConsoleDisplay.console.input(
+                f"[yellow]File [bold]{save_to_path}[/bold] already exists. Do you want to overwrite it? (y/n)[/yellow] "
+            )
+            .lower()
+            .strip()
+        )
+        if response != "y":
+            raise FileExistsError(
+                f"File {save_to_path} already exists. Please delete it or use a different save_to name."
+            )
+    
+    # Initialize empty file
+    multi_domain_results.save(save_to_path)
+    
+    # Run each domain
+    for i, domain in enumerate(domains):
+        ConsoleDisplay.console.print(
+            f"\n[bold cyan]Running domain {i+1}/{len(domains)}: {domain}[/bold cyan]\n"
+        )
+        
+        # Create domain-specific config
+        domain_config = RunConfig(
+            domain=domain,
+            task_set_name=config.task_set_name,
+            task_ids=config.task_ids,
+            num_tasks=config.num_tasks,
+            agent=config.agent,
+            llm_agent=config.llm_agent,
+            llm_args_agent=config.llm_args_agent,
+            user=config.user,
+            llm_user=config.llm_user,
+            llm_args_user=config.llm_args_user,
+            llm_output_eval=config.llm_output_eval,
+            llm_args_output_eval=config.llm_args_output_eval,
+            num_trials=config.num_trials,
+            max_steps=config.max_steps,
+            max_errors=config.max_errors,
+            save_to=None,  # Don't save individual domain results
+            max_concurrency=config.max_concurrency,
+            seed=config.seed,
+            log_level=config.log_level,
+        )
+        
+        # Run domain (skip individual file saving, will save to multi-domain file)
+        domain_results = run_domain(domain_config, skip_save=True)
+        
+        # Store results
+        multi_domain_results.domains[domain] = domain_results
+        
+        # Save after each domain (incremental save)
+        multi_domain_results.save(save_to_path)
+        
+        # Display metrics for this domain
+        from tau2.metrics.agent_metrics import compute_metrics
+        metrics = compute_metrics(domain_results)
+        ConsoleDisplay.display_agent_metrics(metrics)
+    
+    ConsoleDisplay.console.print(
+        f"\n✨ [bold green]Successfully completed all domains![/bold green]\n"
+        f"Results saved to: [bold blue]{save_to_path}[/bold blue]\n"
+        f"To review the simulations, run: [bold blue]tau2 view --file {save_to_path}[/bold blue]"
+    )
+    
+    return multi_domain_results
 
 
 def run_tasks(
