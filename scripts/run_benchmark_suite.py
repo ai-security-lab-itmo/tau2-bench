@@ -15,9 +15,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+import sys
+from pathlib import Path
+
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
+
+# Add scripts directory to path for imports
+scripts_dir = Path(__file__).parent
+if str(scripts_dir) not in sys.path:
+    sys.path.insert(0, str(scripts_dir))
+
+from result_collection import generate_metrics_table
 
 
 @dataclass
@@ -260,6 +270,27 @@ def main():
 
     # Print summary
     print_results_summary(results, console)
+
+    # Collect results and save to CSV
+    successful_files = [
+        Path(output) for success, output in results.values() if success
+    ]
+    if successful_files:
+        console.print("\n[bold cyan]Collecting metrics and saving to CSV...[/bold cyan]")
+        try:
+            df = generate_metrics_table(successful_files)
+            if not df.empty:
+                csv_path = output_dir / "benchmark_results.csv"
+                df.to_csv(csv_path, index=False)
+                console.print(
+                    f"[bold green]✅ Metrics saved to: {csv_path}[/bold green]"
+                )
+                console.print(f"   Total rows: {len(df)}")
+                console.print(f"   Columns: {', '.join(df.columns[:6])}...")
+            else:
+                console.print("[yellow]⚠️  No data to save to CSV[/yellow]")
+        except Exception as e:
+            console.print(f"[red]❌ Error collecting metrics: {e}[/red]")
 
     # Exit with error code if any failed
     failed = sum(1 for success, _ in results.values() if not success)
